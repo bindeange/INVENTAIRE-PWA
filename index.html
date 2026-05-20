@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192x192.png">
+<title>Pharma Inventaire</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+:root{--pri:#2563eb;--pri-l:#eff6ff;--sec:#10b981;--danger:#ef4444;--gray:#64748b;--border:#e2e8f0;--radius:12px;--shadow:0 2px 8px rgba(0,0,0,.1)}
+.hidden{display:none!important}
+.mt1{margin-top:.8rem}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:100;height:56px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hdr h1{font-size:1.05rem;font-weight:700}
+.hdr button{background:none;border:none;color:#fff;font-size:1.3rem;padding:8px;cursor:pointer;border-radius:8px;line-height:1}
+.hdr button:active{background:rgba(255,255,255,.2)}
+#btn-sync{position:relative}
+.badge{position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;border-radius:10px;font-size:.6rem;padding:1px 4px;font-weight:700;pointer-events:none}
+
+/* VIEWS */
+.view{display:none;padding-bottom:100px}
+.view.active{display:block!important}
+
+/* DASHBOARD */
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:.75rem}
+.card{background:#fff;border:none;border-radius:var(--radius);padding:1.2rem .75rem;display:flex;flex-direction:column;align-items:center;gap:.55rem;box-shadow:var(--shadow);cursor:pointer;font-weight:700;font-size:.82rem;text-align:center;color:#1e293b}
+.card:active{opacity:.8}
+.card .i{font-size:1.75rem;line-height:1}
+.pri{background:var(--pri);color:#fff}
+.sec{background:var(--sec);color:#fff}
+.pri-l{background:var(--pri-l);color:var(--pri)}
+
+/* FORMS */
+.fbox{background:#fff;margin:.75rem;padding:1rem;border-radius:var(--radius);box-shadow:var(--shadow)}
+.fbox h2{font-size:1rem;font-weight:700;margin-bottom:.9rem}
+.fg{margin-bottom:.85rem}
+.fg label{display:block;font-weight:600;font-size:.82rem;margin-bottom:.3rem;color:#1e293b}
+.fg input,.fg select{width:100%;padding:.75rem;border:1.5px solid var(--border);border-radius:8px;font-size:1rem;color:#1e293b;background:#fff;-webkit-appearance:none}
+.fg input:focus,.fg select:focus{border-color:var(--pri);outline:none;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.btn{border:none;border-radius:8px;padding:.8rem 1rem;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.35rem;width:100%;margin-top:.5rem}
+.btn:active{opacity:.8}
+.b-pri{background:var(--pri);color:#fff}
+.b-sec{background:var(--sec);color:#fff}
+.b-out{background:#fff;border:1.5px solid var(--border);color:#1e293b}
+.b-suc{background:var(--sec);color:#fff}
+
+/* CONTROLS BAR */
+.ctrl{position:sticky;top:56px;background:#fff;padding:.7rem;z-index:50;border-bottom:1px solid var(--border)}
+.ctrl select{width:100%;padding:.65rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;background:#fff;-webkit-appearance:none;margin-bottom:.5rem}
+.sbar{display:flex;gap:.5rem}
+.sbar input{flex:1;padding:.7rem;border:1.5px solid var(--border);border-radius:8px;font-size:.95rem}
+.sbar button{padding:.7rem 1rem;border:none;border-radius:8px;background:var(--sec);color:#fff;font-size:1rem;cursor:pointer}
+
+/* LIST */
+.lst{padding:.75rem}
+.item{background:#fff;padding:.9rem;border-radius:var(--radius);margin-bottom:.6rem;box-shadow:var(--shadow)}
+.item h4{font-size:.92rem;margin-bottom:.2rem}
+.item .meta{color:var(--gray);font-size:.78rem;margin-bottom:.4rem}
+.item .btn-inv{margin-top:.5rem;padding:.6rem;border:none;border-radius:8px;background:var(--pri);color:#fff;font-weight:700;font-size:.85rem;width:100%;cursor:pointer}
+.item .btn-inv:active{opacity:.8}
+
+/* FAB */
+.fab{position:fixed;bottom:20px;right:14px;height:50px;padding:0 16px 0 12px;border-radius:25px;border:none;background:var(--pri);color:#fff;display:flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(37,99,235,.5);font-weight:700;font-size:.88rem;cursor:pointer;z-index:200}
+.fab:active{opacity:.85}
+.fab-c{width:26px;height:26px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700}
+
+/* SCANNER */
+.scan-box{position:relative;width:100%;height:270px;background:#000;overflow:hidden}
+#camera-preview{width:100%;height:100%;object-fit:cover}
+.scan-ovl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frm{width:200px;height:200px;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
+#manual-wrap{display:none;padding:.75rem}
+#manual-wrap .sbar{margin-top:.5rem}
+#scan-result{padding:.75rem;min-height:60px}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:flex-end}
+.mbox{background:#fff;width:100%;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0}
+.mhd{position:sticky;top:0;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;border-bottom:1px solid var(--border);z-index:10}
+.mhd h3{font-size:.95rem;font-weight:700}
+.mclose{background:none;border:none;font-size:1.2rem;color:var(--gray);cursor:pointer;padding:4px 8px;border-radius:6px}
+.mclose:active{background:var(--border)}
+.mbody{padding:1rem}
+.mfooter{display:flex;gap:.6rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.mfooter .btn{flex:1;margin-top:0}
+
+/* STEPS */
+.steps{display:flex;align-items:center;justify-content:center;padding:.7rem;background:#fff;border-bottom:1px solid var(--border);gap:0}
+.sdot{display:flex;flex-direction:column;align-items:center;gap:3px}
+.snum{width:28px;height:28px;border-radius:50%;background:#f1f5f9;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:var(--gray)}
+.slbl{font-size:.62rem;color:var(--gray);white-space:nowrap}
+.sdot.active .snum{background:var(--pri);border-color:var(--pri);color:#fff}
+.sdot.active .slbl{color:var(--pri);font-weight:700}
+.sdot.done .snum{background:var(--sec);border-color:var(--sec);color:#fff}
+.sline{width:28px;height:2px;background:var(--border);margin-bottom:13px}
+.spane{display:none;padding:1rem}
+.spane.active{display:block}
+.sact{display:flex;gap:.6rem;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border)}
+.sact .btn{flex:1;margin-top:0}
+
+/* SECTION LABEL */
+.sl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--pri);margin-bottom:.6rem;margin-top:.4rem}
+
+/* TOGGLE */
+.trow{background:#f8fafc;border-radius:10px;padding:.75rem;margin-bottom:.75rem}
+.tlbl{display:flex;align-items:center;gap:.7rem;cursor:pointer;font-weight:600;font-size:.88rem}
+.tlbl input{display:none}
+.tsw{width:42px;height:22px;background:var(--border);border-radius:11px;position:relative;transition:background .25s;flex-shrink:0}
+.tsw::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tlbl input:checked+.tsw{background:var(--pri)}
+.tlbl input:checked+.tsw::after{left:22px}
+.lot-box{border:1.5px dashed var(--pri);border-radius:10px;background:var(--pri-l);padding:.85rem;margin-top:.5rem}
+
+/* SUGGEST */
+.sw{position:relative}
+.sug{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--border);border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:130px;overflow-y:auto;box-shadow:var(--shadow)}
+.sug div{padding:.55rem .8rem;cursor:pointer;font-size:.88rem}
+.sug div:active{background:var(--pri-l);color:var(--pri)}
+
+/* BARCODE */
+.bc-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.bc-row input{flex:1;padding:.7rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem}
+.bc-scan{border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:.65rem .85rem;cursor:pointer;font-size:.95rem;color:var(--gray)}
+.bc-del{border:1.5px solid #fecaca;background:#fff;border-radius:8px;padding:.65rem .85rem;cursor:pointer;font-size:.85rem;color:var(--danger)}
+
+/* RADIO */
+.rbox{background:#f8fafc;border-radius:10px;padding:.75rem;margin-bottom:.75rem}
+.rbox p{font-weight:600;font-size:.82rem;margin-bottom:.45rem}
+.rrow{display:flex;gap:.5rem;flex-wrap:wrap}
+.ropt{display:flex;align-items:center;gap:.35rem;padding:.4rem .75rem;border:1.5px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-size:.82rem}
+.ropt input{accent-color:var(--pri)}
+
+/* QTY */
+.qty-big{font-size:2.2rem!important;text-align:center!important;font-weight:700!important;padding:.9rem!important;border:2px solid var(--pri)!important;border-radius:12px!important;background:var(--pri-l)!important}
+
+/* CODE DISPLAY */
+.cdisp{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.65rem;font-family:monospace;font-size:.85rem;word-break:break-all;margin:.4rem 0}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(16px);background:#1e293b;color:#fff;padding:.65rem 1.1rem;border-radius:24px;font-weight:700;font-size:.82rem;z-index:9000;opacity:0;transition:all .3s;pointer-events:none;max-width:92vw;text-align:center;white-space:pre-wrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:rgba(255,255,255,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.9rem;z-index:9999;font-weight:700;color:var(--pri);font-size:.95rem}
+.spin{width:38px;height:38px;border:4px solid var(--pri-l);border-top-color:var(--pri);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <button id="btn-back" class="hidden">&#8592;</button>
+  <h1>Pharma Inventaire</h1>
+  <button id="btn-sync" title="Synchroniser">&#8635;</button>
+</header>
+
+<div class="toast" id="toast"></div>
+<div id="loader" class="hidden"><div class="spin"></div><span>Chargement...</span></div>
+
+<!-- ACCUEIL -->
+<section id="page-accueil" class="view active">
+  <div class="dash">
+    <button class="card pri" onclick="app.go('nouvel-inventaire')"><span class="i">&#9654;</span><span>Démarrer inventaire</span></button>
+    <button class="card pri-l" onclick="app.go('inventaire')"><span class="i">&#128203;</span><span>Continuer inventaire</span></button>
+    <button class="card sec" onclick="app.go('scan')"><span class="i">&#9641;</span><span>Scanner produit</span></button>
+    <button class="card" onclick="app.go('liste-medicaments')"><span class="i">&#128138;</span><span>Liste médicaments</span></button>
+    <button class="card" onclick="app.go('import-excel')"><span class="i">&#128190;</span><span>Importer Excel</span></button>
+    <button class="card" onclick="app.exportInventory()"><span class="i">&#128196;</span><span>Exporter inventaire</span></button>
+  </div>
+</section>
+
+<!-- NOUVEL INVENTAIRE -->
+<section id="page-nouvel-inventaire" class="view hidden">
+  <div class="fbox">
+    <h2>Nouvel inventaire</h2>
+    <form id="form-inv">
+      <div class="fg"><label>Nom de l'inventaire *</label><input id="inv-nom" required placeholder="Ex: Inventaire Mai 2025"></div>
+      <div class="fg"><label>Structure</label><select id="inv-structure"></select></div>
+      <div class="fg"><label>Dépôt</label><select id="inv-depot"></select></div>
+      <div class="fg"><label>Date</label><input type="date" id="inv-date"></div>
+      <div class="fg"><label>Agent</label><input id="inv-agent" placeholder="Nom de l'agent"></div>
+      <button type="submit" class="btn b-pri">Démarrer</button>
+    </form>
+  </div>
+</section>
+
+<!-- INVENTAIRE -->
+<section id="page-inventaire" class="view hidden">
+  <div class="ctrl">
+    <select id="filter-famille-inv" onchange="app.filterByFamille(this.value)"><option value="">Toutes les familles</option></select>
+    <div class="sbar">
+      <input id="search-inv" placeholder="Rechercher DCI ou code..." oninput="app.searchMeds(this.value)">
+      <button onclick="app.go('scan')" title="Scanner">&#9641;</button>
+    </div>
+  </div>
+  <div id="inv-list" class="lst"></div>
+  <button class="fab" onclick="app.openCreate()">
+    <span class="fab-c">+</span><span>Nouveau produit</span>
+  </button>
+</section>
+
+<!-- IMPORT EXCEL -->
+<section id="page-import-excel" class="view hidden">
+  <div class="fbox">
+    <h2>Import Excel</h2>
+    <div class="fg"><label>Fichier .xlsx</label><input type="file" id="file-import" accept=".xlsx,.xls"></div>
+    <button class="btn b-pri" onclick="app.importExcel()">Lancer l'import</button>
+    <button class="btn b-out mt1" onclick="app.downloadTemplate()">Télécharger le modèle</button>
+  </div>
+</section>
+
+<!-- SCAN -->
+<section id="page-scan" class="view hidden">
+  <div class="scan-box">
+    <video id="camera-preview" autoplay playsinline muted></video>
+    <div class="scan-ovl"><div class="scan-frm"></div></div>
+  </div>
+  <div id="manual-wrap">
+    <p style="font-size:.85rem;color:var(--gray);margin-bottom:.4rem">Saisie manuelle :</p>
+    <div class="sbar">
+      <input id="manual-code" placeholder="Code-barre ou QR Code" inputmode="none">
+      <button onclick="app.processCode(document.getElementById('manual-code').value.trim())">OK</button>
+    </div>
+  </div>
+  <div id="scan-result"></div>
+</section>
+
+<!-- LISTE MÉDICAMENTS -->
+<section id="page-liste-medicaments" class="view hidden">
+  <div class="ctrl">
+    <div class="sbar" style="margin-bottom:0">
+      <input id="search-med" placeholder="Rechercher un médicament..." oninput="app.searchMedsListe(this.value)">
+    </div>
+  </div>
+  <div id="med-list" class="lst"></div>
+</section>
+
+<!-- ══════════════ MODAL : CRÉER PRODUIT ══════════════ -->
+<div id="modal-create" class="modal hidden">
+  <div class="mbox">
+    <div class="mhd">
+      <h3>+ Nouveau produit</h3>
+      <button class="mclose" onclick="app.closeModal('modal-create')">&#x2715;</button>
+    </div>
+    <!-- Indicateur étapes -->
+    <div class="steps">
+      <div class="sdot active" id="si1"><span class="snum">1</span><span class="slbl">Famille&amp;DCI</span></div>
+      <div class="sline"></div>
+      <div class="sdot" id="si2"><span class="snum">2</span><span class="slbl">Lot</span></div>
+      <div class="sline"></div>
+      <div class="sdot" id="si3"><span class="snum">3</span><span class="slbl">Codes-barres</span></div>
+    </div>
+    <!-- Étape 1 -->
+    <div id="sp1" class="spane active">
+      <div class="sl">Famille thérapeutique</div>
+      <div class="fg">
+        <label>Famille *</label>
+        <div class="sw">
+          <input id="qc-fam" placeholder="Ex: ANALGESIQUES" autocomplete="off" oninput="app.suggestFam(this.value)">
+          <div id="fam-sug" class="sug hidden"></div>
+        </div>
+      </div>
+      <div class="sl mt1">Médicament (DCI)</div>
+      <div class="fg"><label>DCI *</label><input id="qc-dci" placeholder="Ex: PARACETAMOL 500MG"></div>
+      <div class="fg"><label>Désignation / Nom commercial</label><input id="qc-des" placeholder="Ex: DOLIPRANE"></div>
+      <div class="row2">
+        <div class="fg"><label>Unité</label>
+          <select id="qc-unit">
+            <option>BOITE</option><option>FLACON</option><option>SACHET</option>
+            <option>COMPRIME</option><option>AMPOULE</option><option>TUBE</option><option>UNITE</option>
+          </select>
+        </div>
+        <div class="fg"><label>Code interne</label><input id="qc-code" placeholder="MED001"></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>Prix vente</label><input type="number" id="qc-pv" value="0" min="0" inputmode="numeric"></div>
+        <div class="fg"><label>Prix achat</label><input type="number" id="qc-pa" value="0" min="0" inputmode="numeric"></div>
+      </div>
+      <div class="fg"><label>Catégorie</label>
+        <select id="qc-cat">
+          <option value="recouvrable">Recouvrable</option>
+          <option value="gratuit">Gratuit</option>
+          <option value="subventionne">Subventionné</option>
+        </select>
+      </div>
+      <div class="sact">
+        <button class="btn b-out" onclick="app.closeModal('modal-create')">Annuler</button>
+        <button class="btn b-pri" onclick="app.step(2)">Suivant &#8594;</button>
+      </div>
+    </div>
+    <!-- Étape 2 -->
+    <div id="sp2" class="spane">
+      <div class="sl">Lot (optionnel)</div>
+      <div class="trow">
+        <label class="tlbl">
+          <input type="checkbox" id="has-lot" onchange="app.toggleLot()">
+          <span class="tsw"></span>
+          Rattacher un lot à ce produit
+        </label>
+      </div>
+      <div id="lot-box" class="lot-box hidden">
+        <div class="fg"><label>Numéro de lot *</label><input id="qc-lot" placeholder="Ex: LOT2025001"></div>
+        <div class="row2">
+          <div class="fg"><label>Date péremption</label><input type="date" id="qc-exp"></div>
+          <div class="fg"><label>Stock théorique</label><input type="number" id="qc-stk" value="0" min="0" inputmode="numeric"></div>
+        </div>
+      </div>
+      <div class="sact">
+        <button class="btn b-out" onclick="app.step(1)">&#8592; Retour</button>
+        <button class="btn b-pri" onclick="app.step(3)">Suivant &#8594;</button>
+      </div>
+    </div>
+    <!-- Étape 3 -->
+    <div id="sp3" class="spane">
+      <div class="sl">Codes-barres / QR Codes</div>
+      <div class="rbox">
+        <p>Rattacher les codes à :</p>
+        <div class="rrow">
+          <label class="ropt"><input type="radio" name="bc-tgt" value="dci" checked><span>La DCI</span></label>
+          <label class="ropt" id="ropt-lot"><input type="radio" name="bc-tgt" value="lot"><span>Au lot</span></label>
+        </div>
+      </div>
+      <div id="bc-list">
+        <div class="bc-row">
+          <input type="text" class="bc-inp" placeholder="Code-barre ou QR Code" inputmode="none">
+          <button class="bc-scan" onclick="app.scanForField(0)" title="Scanner">&#9641;</button>
+        </div>
+      </div>
+      <button class="btn b-out mt1" onclick="app.addBcField()">+ Ajouter un code</button>
+      <div class="sact">
+        <button class="btn b-out" onclick="app.step(2)">&#8592; Retour</button>
+        <button class="btn b-suc" onclick="app.createProduct()">&#10003; Créer le produit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL : SAISIE QUANTITÉ ══════════════ -->
+<div id="modal-qty" class="modal hidden">
+  <div class="mbox">
+    <div class="mhd">
+      <h3 id="qty-title">Saisir quantité</h3>
+      <button class="mclose" onclick="app.closeModal('modal-qty')">&#x2715;</button>
+    </div>
+    <div class="mbody">
+      <div id="qty-info" style="font-size:.82rem;color:var(--gray);margin-bottom:.6rem"></div>
+      <div class="fg"><label>Quantité physique comptée *</label><input type="number" id="qty-val" class="qty-big" min="0" inputmode="numeric" placeholder="0"></div>
+      <div class="fg"><label>Observation</label><input id="qty-obs" placeholder="Ex: boite ouverte, manque 2..."></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn b-out" onclick="app.closeModal('modal-qty')">Annuler</button>
+      <button class="btn b-pri" onclick="app.saveQty()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL : CODE INCONNU ══════════════ -->
+<div id="modal-unknown" class="modal hidden">
+  <div class="mbox">
+    <div class="mhd">
+      <h3>Code inconnu</h3>
+      <button class="mclose" onclick="app.closeModal('modal-unknown')">&#x2715;</button>
+    </div>
+    <div class="mbody">
+      <p style="font-size:.82rem;color:var(--gray)">Code scanné :</p>
+      <div class="cdisp" id="unk-code"></div>
+      <div class="fg mt1"><label>Associer à un médicament existant :</label>
+        <input id="assoc-q" placeholder="Rechercher..." oninput="app.searchAssoc(this.value)">
+      </div>
+      <div id="assoc-res" class="lst" style="max-height:160px;overflow-y:auto;padding:.4rem 0"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn b-out" onclick="app.closeModal('modal-unknown')">Ignorer</button>
+      <button class="btn b-pri" onclick="app.closeModal('modal-unknown');app.openCreate()">+ Créer produit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL : SYNC ══════════════ -->
+<div id="modal-sync" class="modal hidden">
+  <div class="mbox">
+    <div class="mhd">
+      <h3>Synchronisation Google Sheets</h3>
+      <button class="mclose" onclick="app.closeModal('modal-sync')">&#x2715;</button>
+    </div>
+    <div class="mbody">
+      <div style="background:#f1f5f9;border-radius:8px;padding:.75rem;margin-bottom:.9rem">
+        <p style="font-size:.75rem;font-weight:700;color:#64748b;margin-bottom:.3rem">CONNEXION</p>
+        <p style="font-size:.78rem;color:#1e293b;word-break:break-all" id="sync-url-display"></p>
+        <div id="sync-status" style="margin-top:.5rem;font-size:.78rem"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        <div style="background:#eff6ff;border-radius:8px;padding:.75rem">
+          <p style="font-weight:700;font-size:.85rem;color:#2563eb;margin-bottom:.25rem">Envoyer vers Sheets</p>
+          <p style="font-size:.78rem;color:#64748b">Envoie les nouveaux inventaires et medicaments non synchronises.</p>
+        </div>
+        <div style="background:#f0fdf4;border-radius:8px;padding:.75rem">
+          <p style="font-weight:700;font-size:.85rem;color:#10b981;margin-bottom:.25rem">Importer depuis Sheets</p>
+          <p style="font-size:.78rem;color:#64748b">Importe familles, medicaments, lots depuis Google Sheets vers l'appareil.</p>
+        </div>
+      </div>
+    </div>
+    <div class="mfooter" style="flex-wrap:wrap;gap:.5rem">
+      <button class="btn b-out" onclick="app.closeModal('modal-sync')" style="flex:0 0 auto;width:auto;padding:.7rem 1rem">Fermer</button>
+      <button class="btn b-sec" onclick="app.syncPull()" style="flex:1">&#8595; Importer</button>
+      <button class="btn b-pri" onclick="app.syncPush()" style="flex:1">&#8593; Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DB (IndexedDB)
+// ═══════════════════════════════════════════════════
+const DB_NAME='pharma_inv_db', DB_VER=1;
+const STORES={
+  familles:[{n:'nom_famille',u:false},{n:'actif',u:false}],
+  medicaments:[{n:'famille_id',u:false},{n:'dci',u:false},{n:'designation',u:false},{n:'code_interne',u:false},{n:'actif',u:false}],
+  codes_medicaments:[{n:'code',u:true},{n:'medicament_id',u:false},{n:'actif',u:false}],
+  lots:[{n:'medicament_id',u:false},{n:'numero_lot',u:false},{n:'date_peremption',u:false},{n:'actif',u:false}],
+  codes_lots:[{n:'code',u:true},{n:'medicament_id',u:false},{n:'lot_id',u:false},{n:'actif',u:false}],
+  inventaires:[{n:'statut',u:false},{n:'synced',u:false}],
+  lignes_inventaire:[{n:'inventaire_id',u:false},{n:'medicament_id',u:false},{n:'lot_id',u:false},{n:'synced',u:false}],
+  structures:[{n:'code_structure',u:true},{n:'actif',u:false}],
+  depots:[{n:'structure_id',u:false},{n:'actif',u:false}],
+  historique:[{n:'table_m',u:false},{n:'date_a',u:false}]
+};
+
+const db={
+  _db:null,
+  init(){
+    return new Promise((ok,fail)=>{
+      if(!window.indexedDB){fail('IndexedDB non supporté');return;}
+      const r=indexedDB.open(DB_NAME,DB_VER);
+      r.onerror=e=>fail(e.target.error);
+      r.onsuccess=e=>{this._db=e.target.result;ok();}
+      r.onupgradeneeded=e=>{
+        const d=e.target.result;
+        for(const [name,idxs] of Object.entries(STORES)){
+          if(!d.objectStoreNames.contains(name)){
+            const s=d.createObjectStore(name,{keyPath:'id'});
+            idxs.forEach(i=>s.createIndex(i.n,i.n,{unique:i.u}));
+          }
+        }
+      };
+    });
+  },
+  _id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);},
+  _store(n,m='readonly'){return this._db.transaction(n,m).objectStore(n);},
+  add(store,data){
+    return new Promise((ok,fail)=>{
+      if(!data.id)data.id=this._id();
+      if(!data.created_at)data.created_at=new Date().toISOString();
+      data.updated_at=new Date().toISOString();
+      const r=this._store(store,'readwrite').add(data);
+      r.onsuccess=()=>ok(data.id);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  put(store,data){
+    return new Promise((ok,fail)=>{
+      data.updated_at=new Date().toISOString();
+      const r=this._store(store,'readwrite').put(data);
+      r.onsuccess=()=>ok(data.id);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  get(store,id){
+    return new Promise((ok,fail)=>{
+      const r=this._store(store).get(id);
+      r.onsuccess=()=>ok(r.result);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  getAll(store){
+    return new Promise((ok,fail)=>{
+      const r=this._store(store).getAll();
+      r.onsuccess=()=>ok(r.result);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  byIndex(store,idx,val){
+    return new Promise((ok,fail)=>{
+      const r=this._store(store).index(idx).getAll(val);
+      r.onsuccess=()=>ok(r.result);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  oneByIndex(store,idx,val){
+    return new Promise((ok,fail)=>{
+      const r=this._store(store).index(idx).get(val);
+      r.onsuccess=()=>ok(r.result);
+      r.onerror=e=>fail(e.target.error);
+    });
+  },
+  async search(q,famId,limit=60){
+    return new Promise((ok,fail)=>{
+      const s=this._store('medicaments');
+      const res=[];const ql=q.toLowerCase();
+      const r=s.openCursor();
+      r.onsuccess=e=>{
+        const c=e.target.result;
+        if(c&&res.length<limit){
+          const v=c.value;
+          if(v.actif!==false){
+            if(!famId||v.famille_id===famId){
+              if(!ql||(v.dci&&v.dci.toLowerCase().includes(ql))||(v.designation&&v.designation.toLowerCase().includes(ql))||(v.code_interne&&v.code_interne.toLowerCase().includes(ql)))
+                res.push(v);
+            }
+          }
+          c.continue();
+        }else ok(res);
+      };
+      r.onerror=e=>fail(e.target.error);
+    });
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// APP
+// ═══════════════════════════════════════════════════
+const app={
+  invId:null,
+  _pendMed:null,_pendLot:null,_pendCode:null,
+  _scanForField:null,_scanForModal:false,
+  _detector:null,_stream:null,_scanning:false,
+  SYNC_URL:'https://script.google.com/macros/s/AKfycbwrO2jyx8Xvh58EpTWcqCYjmS0Wo_YuvKJ0gO2VVM5KDGgJptADM2hztiFEfq31G_Qw/exec',
+
+  async init(){
+    document.getElementById('btn-back').addEventListener('click',()=>this.go('accueil'));
+    document.getElementById('btn-sync').addEventListener('click',()=>this.openModal('modal-sync'));
+    document.getElementById('form-inv').addEventListener('submit',e=>{e.preventDefault();this.startInv();});
+    // BarcodeDetector init
+    if('BarcodeDetector' in window){
+      try{this._detector=new BarcodeDetector({formats:['qr_code','ean_13','ean_8','code_128','upc_a','upc_e','data_matrix']});}catch(e){}
+    }
+    // Seed data
+    const structs=await db.getAll('structures');
+    if(!structs.length){
+      const sid=await db.add('structures',{nom_structure:'PHARMACIE CENTRALE',code_structure:'PHC01',actif:true});
+      await db.add('depots',{structure_id:sid,nom_depot:'MAGASIN PRINCIPAL',actif:true});
+    }
+    await this.loadFamilles();
+    await this.updateBadge();
+  },
+
+  go(view){
+    document.querySelectorAll('.view').forEach(v=>{v.classList.remove('active');v.classList.add('hidden');});
+    const p=document.getElementById('page-'+view);
+    if(p){p.classList.remove('hidden');p.classList.add('active');}
+    const bb=document.getElementById('btn-back');
+    bb.classList.toggle('hidden',view==='accueil');
+    if(view==='nouvel-inventaire')this.initNouvelInv();
+    if(view==='inventaire')this.searchMeds('');
+    if(view==='liste-medicaments')this.searchMedsListe('');
+    if(view==='scan')this.startCamera();
+    else this.stopCamera();
+  },
+
+  async loadFamilles(){
+    const fams=await db.getAll('familles');
+    const sel=document.getElementById('filter-famille-inv');
+    if(sel){sel.innerHTML='<option value="">Toutes les familles</option>';fams.forEach(f=>sel.innerHTML+=`<option value="${f.id}">${f.nom_famille}</option>`);}
+  },
+
+  async initNouvelInv(){
+    const structs=await db.getAll('structures');
+    const depots=await db.getAll('depots');
+    document.getElementById('inv-structure').innerHTML=structs.map(s=>`<option value="${s.id}">${s.nom_structure}</option>`).join('');
+    document.getElementById('inv-depot').innerHTML=depots.map(d=>`<option value="${d.id}">${d.nom_depot}</option>`).join('');
+    document.getElementById('inv-date').value=new Date().toISOString().split('T')[0];
+  },
+
+  async startInv(){
+    const nom=document.getElementById('inv-nom').value.trim();
+    if(!nom){alert('Saisissez un nom pour l\'inventaire');return;}
+    this.invId=await db.add('inventaires',{
+      nom_inventaire:nom,
+      structure:document.getElementById('inv-structure').value,
+      depot:document.getElementById('inv-depot').value,
+      date_inventaire:document.getElementById('inv-date').value,
+      utilisateur:document.getElementById('inv-agent').value,
+      statut:'en_cours',synced:false
+    });
+    this.toast('Inventaire démarré !');
+    this.go('inventaire');
+  },
+
+  _famFilter:null,
+  filterByFamille(val){this._famFilter=val||null;this.searchMeds(document.getElementById('search-inv').value);},
+
+  async searchMeds(q){
+    const meds=await db.search(q,this._famFilter,80);
+    const cnt=document.getElementById('inv-list');
+    if(!cnt)return;
+    if(!meds.length){
+      const msg=this._famFilter||q
+        ?'<p style="color:var(--gray);text-align:center;padding:2rem;font-size:.9rem">Aucun medicament trouve.<br><button class="btn b-pri" style="margin-top:.7rem;width:auto;padding:.6rem 1.2rem" onclick="app.openCreate()">+ Creer un produit</button></p>'
+        :'<p style="color:var(--gray);text-align:center;padding:2rem;font-size:.9rem">Base vide.<br><button class="btn b-pri" style="margin-top:.7rem;width:auto;padding:.6rem 1.2rem" onclick="app.openCreate()">+ Ajouter un premier produit</button></p>';
+      cnt.innerHTML=msg;return;
+    }
+    const [lots,cm,lignes]=await Promise.all([
+      db.getAll('lots'),db.getAll('codes_medicaments'),db.getAll('lignes_inventaire')
+    ]);
+    cnt.innerHTML=meds.map(m=>{
+      const mLots=lots.filter(l=>l.medicament_id===m.id&&l.actif!==false);
+      const mCodes=cm.filter(c=>c.medicament_id===m.id&&c.actif!==false);
+      // Vérifier si déjà inventorié dans la session courante
+      const dejaDone=this.invId?lignes.some(l=>l.inventaire_id===this.invId&&l.medicament_id===m.id):false;
+      const tick=dejaDone?' <span style="color:var(--sec)">✓</span>':'';
+      // Infos lots
+      let lotHtml='';
+      if(mLots.length){
+        lotHtml='<div style="font-size:.75rem;color:var(--gray);margin-bottom:.3rem">'+
+          mLots.map(l=>`Lot ${l.numero_lot}${l.date_peremption?' · exp '+l.date_peremption:''}`).join(' | ')+'</div>';
+      }
+      // Codes barres
+      const codesHtml=mCodes.length
+        ?'<div style="font-size:.72rem;color:#94a3b8;margin-bottom:.3rem">'+mCodes.map(c=>c.code).join(' · ')+'</div>':'';
+      // Bouton(s) : un par lot si lots, sinon un seul
+      let btns='';
+      if(mLots.length){
+        btns=mLots.map(l=>
+          `<button class="btn-inv" style="margin-bottom:.3rem" onclick="app.openQtyLot('${m.id}','${l.id}')">Inventorier · Lot ${l.numero_lot}</button>`
+        ).join('')+
+        `<button class="btn-inv" style="background:var(--sec)" onclick="app.openQty('${m.id}')">Inventorier sans lot</button>`;
+      } else {
+        btns=`<button class="btn-inv" onclick="app.openQty('${m.id}')">Inventorier</button>`;
+      }
+      return `<div class="item" style="${dejaDone?'border-left:3px solid var(--sec)':''}">
+        <h4>${m.dci}${tick}</h4>
+        <div class="meta">${m.code_interne?m.code_interne+' · ':''} ${m.unite_comptage||''}</div>
+        ${lotHtml}${codesHtml}
+        <div style="display:flex;flex-direction:column;gap:.3rem;margin-top:.4rem">${btns}</div>
+      </div>`;
+    }).join('');
+  },
+
+  async searchMedsListe(q){
+    const meds=await db.search(q,null,100);
+    const c=document.getElementById('med-list');
+    if(!c)return;
+    if(!meds.length){c.innerHTML='<p style="color:var(--gray);text-align:center;padding:2rem;font-size:.9rem">Aucun médicament.</p>';return;}
+    const fams=await db.getAll('familles');
+    c.innerHTML=meds.map(m=>{
+      const f=fams.find(x=>x.id===m.famille_id);
+      return `<div class="item"><h4>${m.dci}</h4><div class="meta">${f?f.nom_famille:''} · ${m.code_interne||''} · ${m.unite_comptage||''}</div></div>`;
+    }).join('');
+  },
+
+  async openQty(medId){
+    const med=await db.get('medicaments',medId);
+    this._pendMed=med;this._pendLot=null;
+    document.getElementById('qty-title').textContent=med.dci;
+    document.getElementById('qty-info').textContent=med.unite_comptage?'Unité : '+med.unite_comptage:'';
+    document.getElementById('qty-val').value='';
+    document.getElementById('qty-obs').value='';
+    this.openModal('modal-qty');
+    setTimeout(()=>document.getElementById('qty-val').focus(),350);
+  },
+
+  async openQtyLot(medId,lotId){
+    const med=await db.get('medicaments',medId);
+    const lot=await db.get('lots',lotId);
+    this._pendMed=med;this._pendLot=lot;
+    document.getElementById('qty-title').textContent=med.dci;
+    let info='Lot : '+lot.numero_lot;
+    if(lot.date_peremption)info+=' · Exp : '+lot.date_peremption;
+    if(lot.stock_theorique)info+=' · Stock théo : '+lot.stock_theorique;
+    document.getElementById('qty-info').textContent=info;
+    document.getElementById('qty-val').value='';
+    document.getElementById('qty-obs').value='';
+    this.openModal('modal-qty');
+    setTimeout(()=>document.getElementById('qty-val').focus(),350);
+  },
+
+  openQtyWithLot(med,lot,code){
+    this._pendMed=med;this._pendLot=lot;
+    document.getElementById('qty-title').textContent=med.dci;
+    let info='';
+    if(lot)info=`Lot : ${lot.numero_lot}${lot.date_peremption?' · Exp : '+lot.date_peremption:''}`;
+    if(code)info+=(info?'\n':'')+'Code : '+code;
+    document.getElementById('qty-info').textContent=info;
+    document.getElementById('qty-val').value='';
+    document.getElementById('qty-obs').value='';
+    this.openModal('modal-qty');
+    setTimeout(()=>document.getElementById('qty-val').focus(),350);
+  },
+
+  async saveQty(){
+    const qty=document.getElementById('qty-val').value;
+    if(qty===''){alert('Saisissez une quantité');return;}
+    if(!this.invId){alert('Aucun inventaire en cours.\nDémarrez un inventaire depuis l\'accueil.');this.closeModal('modal-qty');return;}
+    await db.add('lignes_inventaire',{
+      inventaire_id:this.invId,
+      medicament_id:this._pendMed.id,
+      lot_id:this._pendLot?this._pendLot.id:null,
+      famille_id:this._pendMed.famille_id,
+      quantite_physique:Number(qty),
+      observation:document.getElementById('qty-obs').value,
+      synced:false
+    });
+    this.closeModal('modal-qty');
+    this.toast('✓ '+this._pendMed.dci+' : '+qty+' enregistré');
+    this.updateBadge();
+  },
+
+  // ── CRÉATION PRODUIT ──
+  openCreate(){
+    this._resetCreate();
+    this.openModal('modal-create');
+  },
+
+  _resetCreate(){
+    ['qc-fam','qc-dci','qc-des','qc-code'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    document.getElementById('qc-unit').value='BOITE';
+    document.getElementById('qc-cat').value='recouvrable';
+    document.getElementById('qc-pv').value='0';
+    document.getElementById('qc-pa').value='0';
+    document.getElementById('has-lot').checked=false;
+    this.toggleLot();
+    ['qc-lot','qc-exp'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    document.getElementById('qc-stk').value='0';
+    document.getElementById('bc-list').innerHTML=`<div class="bc-row"><input type="text" class="bc-inp" placeholder="Code-barre ou QR Code" inputmode="none"><button class="bc-scan" onclick="app.scanForField(0)" title="Scanner">&#9641;</button></div>`;
+    const r=document.querySelector('input[name="bc-tgt"][value="dci"]');if(r)r.checked=true;
+    document.getElementById('fam-sug').classList.add('hidden');
+    this.step(1);
+  },
+
+  step(n){
+    [1,2,3].forEach(i=>{
+      const p=document.getElementById('sp'+i);
+      if(p){p.classList.remove('active');p.style.display='none';}
+      const si=document.getElementById('si'+i);
+      if(si){si.classList.remove('active','done');}
+    });
+    for(let i=1;i<n;i++){document.getElementById('si'+i)?.classList.add('done');}
+    const sp=document.getElementById('sp'+n);
+    if(sp){sp.style.display='block';sp.classList.add('active');}
+    document.getElementById('si'+n)?.classList.add('active');
+    if(n===3){
+      const hasLot=document.getElementById('has-lot').checked;
+      const ro=document.getElementById('ropt-lot');
+      if(ro)ro.style.opacity=hasLot?'1':'0.4';
+      const rl=document.querySelector('input[name="bc-tgt"][value="lot"]');
+      if(rl)rl.disabled=!hasLot;
+      if(!hasLot){const rd=document.querySelector('input[name="bc-tgt"][value="dci"]');if(rd)rd.checked=true;}
+    }
+  },
+
+  toggleLot(){
+    const on=document.getElementById('has-lot').checked;
+    document.getElementById('lot-box').classList.toggle('hidden',!on);
+  },
+
+  async suggestFam(val){
+    const sug=document.getElementById('fam-sug');
+    if(!val){sug.classList.add('hidden');return;}
+    const fams=await db.getAll('familles');
+    const m=fams.filter(f=>f.nom_famille.toLowerCase().includes(val.toLowerCase()));
+    if(!m.length){sug.classList.add('hidden');return;}
+    sug.innerHTML=m.map(f=>`<div onclick="document.getElementById('qc-fam').value='${f.nom_famille.replace(/'/g,"\\'")}';document.getElementById('fam-sug').classList.add('hidden')">${f.nom_famille}</div>`).join('');
+    sug.classList.remove('hidden');
+  },
+
+  addBcField(){
+    const c=document.getElementById('bc-list');
+    const n=c.querySelectorAll('.bc-row').length;
+    if(n>=5){alert('Maximum 5 codes-barres');return;}
+    const d=document.createElement('div');
+    d.className='bc-row';
+    d.innerHTML=`<input type="text" class="bc-inp" placeholder="Code-barre ou QR Code" inputmode="none"><button class="bc-scan" onclick="app.scanForField(${n})" title="Scanner">&#9641;</button><button class="bc-del" onclick="this.parentNode.remove()">&#x2715;</button>`;
+    c.appendChild(d);
+  },
+
+  scanForField(idx){
+    this._scanForField=idx;
+    this._scanForModal=true;
+    this.closeModal('modal-create');
+    this.go('scan');
+  },
+
+  async createProduct(){
+    const fam=document.getElementById('qc-fam').value.trim();
+    const dci=document.getElementById('qc-dci').value.trim();
+    if(!fam||!dci){alert('Famille et DCI sont obligatoires');this.step(1);return;}
+    const hasLot=document.getElementById('has-lot').checked;
+    const lotNum=document.getElementById('qc-lot').value.trim();
+    if(hasLot&&!lotNum){alert('Saisissez le numéro de lot');this.step(2);return;}
+    try{
+      let famId;
+      const fams=await db.byIndex('familles','nom_famille',fam);
+      famId=fams.length?fams[0].id:await db.add('familles',{nom_famille:fam,actif:true});
+
+      const medId=await db.add('medicaments',{
+        famille_id:famId,dci,
+        designation:document.getElementById('qc-des').value.trim()||dci,
+        unite_comptage:document.getElementById('qc-unit').value,
+        code_interne:document.getElementById('qc-code').value.trim(),
+        prix_vente_unitaire:Number(document.getElementById('qc-pv').value||0),
+        prix_achat_unitaire:Number(document.getElementById('qc-pa').value||0),
+        categorie_financiere:document.getElementById('qc-cat').value,
+        actif:true,synced:false
+      });
+
+      let lotId=null;
+      if(hasLot&&lotNum){
+        lotId=await db.add('lots',{
+          medicament_id:medId,numero_lot:lotNum,
+          date_peremption:document.getElementById('qc-exp').value,
+          stock_theorique:Number(document.getElementById('qc-stk').value||0),
+          actif:true,synced:false
+        });
+      }
+
+      const tgt=document.querySelector('input[name="bc-tgt"]:checked')?.value||'dci';
+      for(const inp of document.querySelectorAll('.bc-inp')){
+        const v=inp.value.trim();if(!v)continue;
+        if(tgt==='lot'&&lotId){
+          try{await db.add('codes_lots',{code:v,medicament_id:medId,lot_id:lotId,type_code:'manuel',actif:true});}catch(e){}
+        }else{
+          try{await db.add('codes_medicaments',{code:v,medicament_id:medId,type_code:'manuel',actif:true});}catch(e){}
+        }
+      }
+      this.closeModal('modal-create');
+      await this.loadFamilles();
+      await this.searchMeds(document.getElementById('search-inv').value||'');
+      this.toast('✓ Produit "'+dci+'" créé');
+    }catch(err){alert('Erreur : '+err.message);}
+  },
+
+  // ── SCANNER ──
+  async startCamera(){
+    const v=document.getElementById('camera-preview');
+    const mw=document.getElementById('manual-wrap');
+    try{
+      this._stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+      v.srcObject=this._stream;
+      this._scanning=true;
+      document.getElementById('scan-result').innerHTML='<p style="text-align:center;color:var(--gray);padding:1rem;font-size:.88rem">Pointez vers un code-barres...</p>';
+      this._scanLoop(v);
+    }catch(e){
+      mw.style.display='block';
+      document.getElementById('scan-result').innerHTML='<p style="color:var(--gray);padding:.75rem;font-size:.85rem">Caméra non disponible. Saisissez le code manuellement.</p>';
+    }
+  },
+
+  stopCamera(){
+    this._scanning=false;
+    if(this._stream){this._stream.getTracks().forEach(t=>t.stop());this._stream=null;}
+  },
+
+  async _scanLoop(v){
+    if(!this._scanning)return;
+    if(this._detector&&v.readyState===v.HAVE_ENOUGH_DATA){
+      try{
+        const bc=await this._detector.detect(v);
+        if(bc.length){this.stopCamera();this.processCode(bc[0].rawValue);return;}
+      }catch(e){}
+    }
+    requestAnimationFrame(()=>this._scanLoop(v));
+  },
+
+  async processCode(raw){
+    if(!raw)return;
+    const res=document.getElementById('scan-result');
+    res.innerHTML=`<p style="padding:.75rem;font-size:.88rem;color:var(--gray)">Code : <strong>${raw}</strong> — Recherche...</p>`;
+
+    // Si on scannait pour remplir un champ du modal
+    if(this._scanForModal&&this._scanForField!==null){
+      const inputs=document.querySelectorAll('.bc-inp');
+      if(inputs[this._scanForField])inputs[this._scanForField].value=raw;
+      this._scanForModal=false;this._scanForField=null;
+      this.go('inventaire');
+      this.openCreate();
+      return;
+    }
+
+    try{
+      // 1. codes_lots
+      const cl=await db.oneByIndex('codes_lots','code',raw);
+      if(cl&&cl.actif!==false){
+        const med=await db.get('medicaments',cl.medicament_id);
+        const lot=await db.get('lots',cl.lot_id);
+        if(this.invId)this.openQtyWithLot(med,lot,raw);
+        else res.innerHTML=`<div class="item"><h4>${med.dci}</h4><div class="meta">Lot : ${lot.numero_lot} · Exp : ${lot.date_peremption}</div></div>`;
+        return;
+      }
+      // 2. codes_medicaments
+      const cm=await db.oneByIndex('codes_medicaments','code',raw);
+      if(cm&&cm.actif!==false){
+        const med=await db.get('medicaments',cm.medicament_id);
+        if(this.invId)this.openQtyWithLot(med,null,raw);
+        else res.innerHTML=`<div class="item"><h4>${med.dci}</h4><div class="meta">${med.code_interne||''}</div></div>`;
+        return;
+      }
+      // 3. Inconnu
+      this._pendCode=raw;
+      document.getElementById('unk-code').textContent=raw;
+      document.getElementById('assoc-q').value='';
+      document.getElementById('assoc-res').innerHTML='';
+      this.openModal('modal-unknown');
+    }catch(e){res.innerHTML=`<p style="color:var(--danger);padding:.75rem">Erreur : ${e.message}</p>`;}
+  },
+
+  async searchAssoc(q){
+    const meds=await db.search(q,null,20);
+    const c=document.getElementById('assoc-res');
+    c.innerHTML=meds.map(m=>`<div class="item" style="padding:.6rem;margin-bottom:.4rem" onclick="app.assocCode('${m.id}')"><strong>${m.dci}</strong><div class="meta">${m.code_interne||''}</div></div>`).join('');
+  },
+
+  async assocCode(medId){
+    if(!this._pendCode)return;
+    try{
+      await db.add('codes_medicaments',{code:this._pendCode,medicament_id:medId,type_code:'manuel',actif:true});
+      this.closeModal('modal-unknown');
+      this.toast('✓ Code associé');
+    }catch(e){alert('Ce code est déjà associé à un autre médicament.');}
+  },
+
+  // ── EXPORT ──
+  async exportInventory(){
+    if(typeof XLSX==='undefined'){
+      this.toast('Chargement Excel... Reessayez dans 3 secondes');
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      document.head.appendChild(s); return;
+    }
+    this.showLoader(true);
+    try{
+      const [meds,fams,lots,cm,cl,lignes]=await Promise.all([
+        db.getAll('medicaments'),db.getAll('familles'),db.getAll('lots'),
+        db.getAll('codes_medicaments'),db.getAll('codes_lots'),db.getAll('lignes_inventaire')
+      ]);
+
+      // En-têtes fixes — ligne 1 de la feuille
+      const H=['famille','dci','designation','unite_comptage','code_interne',
+               'prix_vente_unitaire','prix_achat_unitaire','categorie_financiere',
+               'numero_lot','date_peremption','stock_theorique',
+               'quantite_physique','observation','code_1','code_2','code_3'];
+
+      // On construit un tableau de tableaux (aoa) — garantit les en-têtes en ligne 1
+      const aoa=[H]; // première ligne = en-têtes
+
+      for(const m of meds){
+        if(m.actif===false)continue;
+        const fam=fams.find(f=>f.id===m.famille_id);
+        const mLots=lots.filter(l=>l.medicament_id===m.id&&l.actif!==false);
+        const mCodes=cm.filter(c=>c.medicament_id===m.id&&c.actif!==false);
+        const base=[
+          fam?fam.nom_famille:'',
+          m.dci||'',
+          m.designation||m.dci||'',
+          m.unite_comptage||'BOITE',
+          m.code_interne||'',
+          m.prix_vente_unitaire||0,
+          m.prix_achat_unitaire||0,
+          m.categorie_financiere||'recouvrable'
+        ];
+        if(!mLots.length){
+          const lg=lignes.slice().reverse().find(l=>l.medicament_id===m.id&&!l.lot_id);
+          aoa.push([...base,'','','',
+            lg?lg.quantite_physique:'',
+            lg?lg.observation||'':'',
+            mCodes[0]?mCodes[0].code:'',
+            mCodes[1]?mCodes[1].code:'',
+            mCodes[2]?mCodes[2].code:''
+          ]);
+        } else {
+          for(const l of mLots){
+            const lCodes=cl.filter(c=>c.lot_id===l.id&&c.actif!==false);
+            const lg=lignes.find(li=>li.medicament_id===m.id&&li.lot_id===l.id);
+            const allC=[...lCodes.map(c=>c.code),...mCodes.map(c=>c.code)];
+            aoa.push([...base,
+              l.numero_lot||'',
+              l.date_peremption||'',
+              l.stock_theorique||0,
+              lg?lg.quantite_physique:'',
+              lg?lg.observation||'':'',
+              allC[0]||'',allC[1]||'',allC[2]||''
+            ]);
+          }
+        }
+      }
+
+      // Si base vide, ligne exemple
+      if(aoa.length===1){
+        aoa.push(['ANALGESIQUES','PARACETAMOL 500MG','PARACETAMOL','BOITE','MED001',
+                  100,80,'recouvrable','LOT001','2027-12-31',100,'','',
+                  '3400936859627','','']);
+      }
+
+      const wb=XLSX.utils.book_new();
+
+      // Feuille Inventaire — données réelles
+      const ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols']=[{wch:20},{wch:32},{wch:25},{wch:12},{wch:12},{wch:15},
+                   {wch:15},{wch:16},{wch:14},{wch:14},{wch:12},{wch:14},
+                   {wch:20},{wch:18},{wch:18},{wch:18}];
+      XLSX.utils.book_append_sheet(wb,ws,'Inventaire');
+
+      // Feuille MODELE_IMPORT — en-têtes + 1 ligne exemple vide pour guider la saisie
+      const wsM=XLSX.utils.aoa_to_sheet([
+        H,
+        ['FAMILLE_ICI','DCI_ICI','DESIGNATION','BOITE','CODE001',
+         0,0,'recouvrable','NUMERO_LOT','2027-12-31',0,'','','','','']
+      ]);
+      wsM['!cols']=ws['!cols'];
+      XLSX.utils.book_append_sheet(wb,wsM,'MODELE_IMPORT');
+
+      XLSX.writeFile(wb,'Inventaire_'+new Date().toISOString().split('T')[0]+'.xlsx');
+      this.toast((aoa.length-1)+' ligne(s) exportee(s) avec en-tetes');
+    }finally{this.showLoader(false);}
+  },
+
+    // ── IMPORT EXCEL ──
+  async importExcel(){
+    if(typeof XLSX==='undefined'){this.toast('Bibliotheque Excel non chargee. Patientez...');return;}
+    const fi=document.getElementById('file-import');
+    if(!fi.files.length){alert('Selectionnez un fichier Excel');return;}
+    this.showLoader(true);
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        let nNew=0,nUpdate=0,nSkip=0;
+
+        for(const row of rows){
+          const fv=(row.famille||row.FAMILLE||'').trim();
+          const dv=(row.dci||row.DCI||row.nom||'').trim();
+          if(!fv||!dv){nSkip++;continue;}
+
+          // 1. Famille — créer si absente
+          let fid;
+          const fx=await db.byIndex('familles','nom_famille',fv);
+          fid=fx.length?fx[0].id:await db.add('familles',{nom_famille:fv,actif:true,synced:false});
+
+          // 2. Médicament — chercher par DCI dans la même famille
+          const allMeds=await db.getAll('medicaments');
+          let med=allMeds.find(m=>m.famille_id===fid&&m.dci.toLowerCase()===dv.toLowerCase()&&m.actif!==false);
+
+          if(med){
+            // Mettre à jour les infos manquantes (prix, unite, code_interne)
+            let changed=false;
+            if(!med.unite_comptage&&row.unite_comptage){med.unite_comptage=row.unite_comptage;changed=true;}
+            if(!med.code_interne&&(row.code_interne||row.code)){med.code_interne=row.code_interne||row.code;changed=true;}
+            if(!med.prix_vente_unitaire&&row.prix_vente_unitaire){med.prix_vente_unitaire=Number(row.prix_vente_unitaire);changed=true;}
+            if(!med.prix_achat_unitaire&&row.prix_achat_unitaire){med.prix_achat_unitaire=Number(row.prix_achat_unitaire);changed=true;}
+            if(changed){med.synced=false;await db.put('medicaments',med);}
+            nUpdate++;
+          } else {
+            // Créer le médicament
+            const newId=await db.add('medicaments',{
+              famille_id:fid,dci:dv,
+              designation:row.designation||dv,
+              unite_comptage:row.unite_comptage||'BOITE',
+              code_interne:row.code_interne||row.code||'',
+              prix_vente_unitaire:Number(row.prix_vente_unitaire||0),
+              prix_achat_unitaire:Number(row.prix_achat_unitaire||0),
+              categorie_financiere:row.categorie_financiere||'recouvrable',
+              actif:true,synced:false
+            });
+            med=await db.get('medicaments',newId);
+            nNew++;
+          }
+
+          // 3. Lot — créer si absent pour ce médicament
+          const lotNum=(row.numero_lot||'').trim();
+          if(lotNum){
+            const existLots=await db.byIndex('lots','medicament_id',med.id);
+            let lot=existLots.find(l=>l.numero_lot===lotNum);
+            if(!lot){
+              await db.add('lots',{
+                medicament_id:med.id,
+                numero_lot:lotNum,
+                date_peremption:row.date_peremption||'',
+                stock_theorique:Number(row.stock_theorique||0),
+                actif:true,synced:false
+              });
+            } else {
+              // Mettre à jour stock si absent
+              if(!lot.stock_theorique&&row.stock_theorique){
+                lot.stock_theorique=Number(row.stock_theorique);
+                lot.synced=false;
+                await db.put('lots',lot);
+              }
+            }
+          }
+
+          // 4. Codes-barres — ajouter ceux qui n'existent pas encore
+          for(const k of['code_1','code_2','code_3']){
+            const code=(row[k]||'').trim();
+            if(!code)continue;
+            try{
+              await db.add('codes_medicaments',{
+                code,medicament_id:med.id,type_code:'import',actif:true
+              });
+            }catch(er){} // Ignore si code déjà existant (contrainte unique)
+          }
+        }
+
+        await this.loadFamilles();
+        this.toast(nNew+' crees, '+nUpdate+' mis a jour'+(nSkip?' ('+nSkip+' ignores)':''));
+      }catch(err){alert('Erreur import : '+err.message);}
+      finally{this.showLoader(false);}
+    };
+    reader.readAsArrayBuffer(fi.files[0]);
+  },
+
+  downloadTemplate(){
+    if(typeof XLSX==='undefined'){this.toast('Chargement Excel... Reessayez');return;}
+    const wb=XLSX.utils.book_new();
+    const H=['famille','dci','designation','unite_comptage','code_interne',
+             'prix_vente_unitaire','prix_achat_unitaire','categorie_financiere',
+             'numero_lot','date_peremption','stock_theorique',
+             'quantite_physique','observation','code_1','code_2','code_3'];
+    // Ligne 1 = en-têtes, lignes 2-3 = exemples
+    const ws=XLSX.utils.aoa_to_sheet([
+      H,
+      ['ANALGESIQUES','PARACETAMOL 500MG','PARACETAMOL','BOITE','MED001',
+       100,80,'recouvrable','LOT001','2027-12-31',100,'','','3400936859627','',''],
+      ['ANTIBIOTIQUES','AMOXICILLINE 500MG','AMOXICILLINE','BOITE','MED002',
+       500,400,'recouvrable','LOT002','2026-06-30',50,'','','','','']
+    ]);
+    ws['!cols']=[{wch:20},{wch:32},{wch:25},{wch:12},{wch:12},{wch:15},
+                 {wch:15},{wch:16},{wch:14},{wch:14},{wch:12},{wch:14},
+                 {wch:20},{wch:18},{wch:18},{wch:18}];
+    XLSX.utils.book_append_sheet(wb,ws,'Modele_Import');
+    XLSX.writeFile(wb,'Modele_Import_Pharma.xlsx');
+  },
+
+  // ── SYNC ──
+  // Google Apps Script : POST Content-Type text/plain, GET avec ?entity=xxx
+  async _fetchGAS(url, options){
+    const res = await fetch(url, { redirect:'follow', ...options });
+    if(!res.ok) throw new Error('HTTP '+res.status+' - Vérifiez que le script est déployé "Accès: Tout le monde"');
+    const text = await res.text();
+    try{ return JSON.parse(text); }
+    catch(e){ throw new Error('Réponse invalide: '+text.substring(0,120)); }
+  },
+
+  async syncPush(){
+    this.closeModal('modal-sync');
+    if(!navigator.onLine){this.toast('Vous etes hors ligne');return;}
+    this.showLoader(true);
+    let total=0, errors=[];
+    try{
+      const entities=['familles','medicaments','lots','codes_medicaments','codes_lots','inventaires','lignes_inventaire'];
+      for(const e of entities){
+        try{
+          const all=await db.getAll(e);
+          const toSync=all.filter(r=>r.synced===false);
+          if(!toSync.length)continue;
+          const data=await this._fetchGAS(this.SYNC_URL,{
+            method:'POST',
+            headers:{'Content-Type':'text/plain'},
+            body:JSON.stringify({entity:e,action:'upsert',records:toSync})
+          });
+          if(data.success){
+            for(const r of toSync){r.synced=true;await db.put(e,r);}
+            total+=toSync.length;
+          } else errors.push(e+': '+(data.error||'erreur'));
+        }catch(err){errors.push(e+': '+err.message);}
+      }
+      if(errors.length) this.toast('Partiel: '+total+' envoyes | Erreurs: '+errors.slice(0,2).join(', '));
+      else if(total>0) this.toast(total+' enregistrement(s) envoye(s) !');
+      else this.toast('Deja a jour');
+      await this.updateBadge();
+    }catch(err){this.toast('Erreur: '+err.message);}
+    finally{this.showLoader(false);}
+  },
+
+  async syncPull(){
+    this.closeModal('modal-sync');
+    if(!navigator.onLine){this.toast('Vous etes hors ligne');return;}
+    if(!confirm('Importer familles, medicaments et lots depuis Google Sheets ?\nLes donnees locales seront mises a jour.'))return;
+    this.showLoader(true);
+    let total=0, errors=[];
+    try{
+      for(const e of['familles','medicaments','lots','codes_medicaments']){
+        try{
+          const data=await this._fetchGAS(this.SYNC_URL+'?entity='+e,{method:'GET'});
+          if(!data.success||!data.data){errors.push(e+': '+(data.error||'vide'));continue;}
+          for(const r of data.data){
+            if(!r.id)continue;
+            r.synced=true;
+            const ex=await db.get(e,r.id);
+            if(ex){await db.put(e,r);}
+            else{try{await db.add(e,r);}catch(er){await db.put(e,r);}}
+            total++;
+          }
+        }catch(err){errors.push(e+': '+err.message);}
+      }
+      await this.loadFamilles();
+      if(this.invId) await this.searchMeds('');
+      if(errors.length) this.toast('Partiel: '+total+' importes | '+errors.slice(0,2).join(', '));
+      else this.toast(total+' element(s) importe(s) !');
+      await this.updateBadge();
+    }catch(err){this.toast('Erreur: '+err.message);}
+    finally{this.showLoader(false);}
+  },
+
+  async updateBadge(){
+    let n=0;
+    for(const e of['inventaires','lignes_inventaire','medicaments','lots']){
+      const all=await db.getAll(e);
+      n+=all.filter(r=>r.synced===false).length;
+    }
+    const btn=document.getElementById('btn-sync');
+    const old=btn.querySelector('.badge');if(old)old.remove();
+    if(n>0){const b=document.createElement('span');b.className='badge';b.textContent=n>99?'99+':n;btn.appendChild(b);}
+  },
+
+  // ── UTILS ──
+  openModal(id){
+    document.getElementById(id).classList.remove('hidden');
+    if(id==='modal-sync'){
+      const d=document.getElementById('sync-url-display');
+      if(d) d.textContent=this.SYNC_URL;
+      const s=document.getElementById('sync-status');
+      if(s) s.innerHTML=navigator.onLine
+        ? '<span style="color:#10b981">&#9679; En ligne</span>'
+        : '<span style="color:#ef4444">&#9679; Hors ligne</span>';
+    }
+  },
+  closeModal(id){document.getElementById(id).classList.add('hidden');},
+  showLoader(on){document.getElementById('loader').classList.toggle('hidden',!on);},
+  toast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    clearTimeout(this._toastT);
+    this._toastT=setTimeout(()=>t.classList.remove('show'),3000);
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// DÉMARRAGE
+// ═══════════════════════════════════════════════════
+window.addEventListener('load',async()=>{
+  try{
+    await db.init();
+  }catch(e){
+    document.body.innerHTML=`<div style="padding:2rem;text-align:center;font-family:sans-serif"><h2 style="color:#ef4444">Erreur</h2><p style="margin-top:1rem;color:#64748b">${e}</p><p style="margin-top:1rem;font-size:.85rem">Essayez de vider le cache du navigateur.</p></div>`;
+    return;
+  }
+  await app.init();
+});
+
+// Charger XLSX en arrière-plan (pas bloquant)
+(function(){
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.async=true;
+  document.head.appendChild(s);
+})();
+
+// Fermer modaux au clic extérieur
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('modal'))app.closeModal(e.target.id);
+  if(!e.target.closest('.sw'))document.getElementById('fam-sug')?.classList.add('hidden');
+});
+
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg=>{
+        console.log('SW enregistre, scope:',reg.scope);
+        reg.addEventListener('updatefound',()=>{
+          const newSW=reg.installing;
+          newSW.addEventListener('statechange',()=>{
+            if(newSW.state==='installed'&&navigator.serviceWorker.controller)
+              console.log('Nouvelle version disponible');
+          });
+        });
+      })
+      .catch(err=>console.error('SW echec:',err));
+  });
+}
+</script>
+</body>
+</html>
